@@ -53,8 +53,13 @@ The below exerpt builds a 3 stage, 3 scenario stochastic grid where each stage l
 
 ```py
 import PyStochOpt
+
+# Building a stochastic grid with 3 stages, each of which lasts 168 hours with 3 stochastic scenarios (ie, three branches per stage).
 StochasticGrid = PyStochOpt.StochasticGrid(n_stages = 3, n_scenarios = 3, stage_duration = 168)
+
 # Building a heirarchical grid for a decision made every 48 hours
-48_hour_grid = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(48))
-1_hour_delay = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(1,1))
+grid_48_hour = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(48))
+
+# Building a hourly grid with a 1 hour delay. 
+delay_1_hour = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(1,1))
 ```
