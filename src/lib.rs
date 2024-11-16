@@ -17,14 +17,14 @@ struct StochasticGrid {
 }
 
 fn build_grid(n_stages: usize, n_scenarios: usize,stage_duration: usize) ->  Vec<(usize,usize)> {
-    let total_time: usize = stage_duration * (n_scenarios.pow(n_stages as u32) - 1) / (n_scenarios - 1) + ((n_stages) * stage_duration  - n_stages * stage_duration) +  n_scenarios.pow(n_stages as u32) * stage_duration;
+    let total_time: usize = stage_duration * (n_scenarios.pow(n_stages as u32+ 1) - 1) / (n_scenarios - 1);
     let mut grid: Vec<(usize,usize)>   = vec![(0,0); total_time];
 
     (0..((n_stages+1) * stage_duration)).into_iter().for_each(|t| {
         let stage: usize = (t as f64 / stage_duration as f64).floor() as usize;
         let scenario: usize = n_scenarios.pow(stage as u32);
         (0..scenario).into_iter().for_each(|s| {
-            let key: usize = stage_duration * (n_scenarios.pow(stage as u32) - 1) / (n_scenarios - 1) + (t - stage * stage_duration) + s * stage_duration;
+            let key: usize = scenario * (t - stage * stage_duration) + s + stage_duration * (scenario -1) / (n_scenarios - 1);
             grid[key] = (s, t);
         });
     });
@@ -51,34 +51,37 @@ impl StochasticGrid {
 
     #[pyo3(signature = (grid_duration, delay=None))]
     fn new_grid(&mut self, grid_duration: usize, delay: Option<usize>) -> Vec<(usize,usize)> {
-        let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32) - 1) / (self.n_scenarios - 1) + ((self.n_stages) * self.stage_duration  - self.n_stages * self.stage_duration) +  self.n_scenarios.pow(self.n_stages as u32) * self.stage_duration;
+        let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
         let delay: usize = delay.unwrap_or(0);
         let mut new_grid: Vec<(usize,usize)>   = vec![(0,0); total_time];
     
         (0..((self.n_stages+1) * self.stage_duration)).into_iter().for_each(|t| {
             if t < delay {     
                 let grid_t:usize = ((t as f64 / grid_duration as f64).floor() as usize) * grid_duration as usize;
-                let grid_stage: usize = ((grid_t as f64 / self.stage_duration as f64).floor() as usize);
+                let grid_stage: usize = (grid_t as f64 / self.stage_duration as f64).floor() as usize;
                 let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                 let scenario: usize = self.n_scenarios.pow(stage as u32);      
                 (0..scenario).into_iter().for_each(|s| {
-                    let key: usize = self.stage_duration * (self.n_scenarios.pow(stage as u32) - 1) / (self.n_scenarios - 1) + (t - stage * self.stage_duration) + s * self.stage_duration;
+                    let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
                     let ratio: usize = self.n_stages.pow((stage - grid_stage) as u32);
                     new_grid[key] = ((s as f64/ratio as f64).floor() as usize, 0);
                 }); 
             }
-            else {
+            else {     
                 let grid_t:usize = (((t - delay) as f64 / grid_duration as f64).floor() as usize) * grid_duration as usize;
-                let grid_stage: usize = ((grid_t as f64 / self.stage_duration as f64).floor() as usize);
-                let stage: usize = ((t - delay) as f64 / self.stage_duration as f64).floor() as usize;
+                let grid_stage: usize = (grid_t as f64 / self.stage_duration as f64).floor() as usize;
+                let stage: usize = (t  as f64 / self.stage_duration as f64).floor() as usize;
                 let scenario: usize = self.n_scenarios.pow(stage as u32);
-
+                let grid_scenario: usize = self.n_scenarios.pow(grid_stage as u32);      
                 (0..scenario).into_iter().for_each(|s| {
-                    let key: usize = self.stage_duration * (self.n_scenarios.pow(stage as u32) - 1) / (self.n_scenarios - 1) + (t - stage * self.stage_duration) + s * self.stage_duration;
+                    let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
                     let ratio: usize = self.n_stages.pow((stage - grid_stage) as u32);
-                    new_grid[key] = ((s as f64/ratio as f64).floor() as usize, grid_t);
-                });
-        }
+                    for i in 0..ratio {
+                        new_grid[key + i] = ((s as f64/ratio as f64).floor() as usize, grid_t);
+                    }
+                    //new_grid[key] = ((s as f64/ratio as f64).floor() as usize, grid_t);
+                }); 
+            }
         });
         return new_grid;
     }
