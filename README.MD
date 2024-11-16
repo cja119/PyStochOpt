@@ -47,10 +47,14 @@ maturin develop
 
 This should succesfully build the module and store it in your native python location (pay attention to which location it prints when the module is built)
 
-### Step 5: Run The Module
+## Example Script
 
-In your python, script use the following code to build your heirarchical grid structure:
+The below exerpt builds a 3 stage, 3 scenario stochastic grid where each stage lasts 168 hours. It then builds two time sets. One with a heirarchy for decisions made every 24 hours and another for an hourly decision, but with a 1 hour delay (useful for modeling difference equations, for example). 
 
 ```py
 import PyStochOpt
+StochasticGrid = PyStochOpt.StochasticGrid(n_stages = 3, n_scenarios = 3, stage_duration = 168)
+# Building a heirarchical grid for a decision made every 48 hours
+48_hour_grid = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(48))
+1_hour_delay = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(1,1))
 ```
