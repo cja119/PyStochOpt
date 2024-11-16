@@ -65,6 +65,6 @@ delay_1_hour = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(1,1))
 ```
 
 # Theory
-
+![Non Anticipativity Structure Diagram](Diagram.png)
 ## Traditional Approach to Stochastic Optimisation
-Typically for a stochastic optimisation model, the indices of all leaf nodes on the stochastic tree will be extended throughout the whole time domain. In order to prevent the optimisation model from being able to anticipate future events a set of `non anticipaticity constraints' are used to enforce equality of variables in leaf nodes which share common branches (at times in the domain before the branches have split). A diagram of this structure is shown below. The `greyed out' arrows represent the branches which are enforced to be equal to eachother. The black arrows represent `leader branches' for which the variables are free to be optimised.
+Typically for a stochastic optimisation model, the indices of all leaf nodes on the stochastic tree will be extended throughout the whole time domain. In order to prevent the optimisation model from being able to anticipate future events a set of `non anticipaticity constraints' are used to enforce equality of variables in leaf nodes which share common branches (at times in the domain before the branches have split). A diagram of this structure is shown above. The `greyed out' arrows represent the branches which are enforced to be equal to eachother. The black arrows represent `leader branches' for which the variables are free to be optimised.
