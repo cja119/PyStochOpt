@@ -49,7 +49,7 @@ This should succesfully build the module and store it in your native python loca
 
 ## Example Script
 
-The below exerpt builds a 3 stage, 3 scenario stochastic grid where each stage lasts 168 hours. It then builds two time sets. One with a heirarchy for decisions made every 24 hours and another for an hourly decision, but with a 1 hour delay (useful for modeling difference equations, for example). 
+The below exerpt builds a 3 stage, 3 scenario stochastic grid where each stage lasts 168 hours. It then builds two time sets: one with a heirarchy for decisions made every 24 hours and another for an hourly decision, but with a 1 hour delay (useful for modeling difference equations, for example). 
 
 ```py
 import PyStochOpt
