@@ -1,4 +1,4 @@
-# PyStoch Opt[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Imperial](https://img.shields.io/badge/Imperial-0000C5.svg)](https://www.imperial.ac.uk)
+# PyStoch Opt  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Imperial](https://img.shields.io/badge/Imperial-0000C5.svg)](https://www.imperial.ac.uk)
 
 PyStochOpt is an indexing and sampling module, primarily designed to aid in building stochastic energy systems models in python. This module is build in rust and can be used to remove the need for computationally expensive non anticipativity constraints. See the theory section for more!
 
