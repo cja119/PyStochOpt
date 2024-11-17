@@ -132,9 +132,8 @@ impl StochasticGrid {
                 }
             }
 
-
+            
             for s in 0..self.n_scenarios.pow(self.n_stages as u32) {
-                println!("Scenario: {}, Start_time: {}, End_time {}", s,self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize,self.stage_duration * (self.n_stages + 1));
                 for t in self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize {
                     let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                     let scenario: usize = self.n_scenarios.pow(stage as u32);  
