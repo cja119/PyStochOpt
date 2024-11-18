@@ -4,7 +4,6 @@ use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::Rng;
-/// Formats the sum of two numbers as string.
 
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
@@ -16,7 +15,7 @@ fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let mut rows: Vec<(usize, f64)> = Vec::new();
     for (i, result) in rdr.records().enumerate() {
         if i == 0 {
-            continue; // Skip the first line
+            continue; 
         }
         let mut record = result.expect("Failed to read CSV record");
         if record.iter().any(|field| field.contains(' ')) {
@@ -57,6 +56,37 @@ fn build_grid(n_stages: usize, n_scenarios: usize,stage_duration: usize) ->  Vec
 }   
 
 #[pymethods]
+/// Implementation of the `StochasticGrid` struct.
+///
+/// # Methods
+///
+/// - `new(n_stages: usize, n_scenarios: usize, stage_duration: usize) -> Self`
+///   - Creates a new instance of `StochasticGrid`.
+///   - Parameters:
+///     - `n_stages`: Number of stages.
+///     - `n_scenarios`: Number of scenarios.
+///     - `stage_duration`: Duration of each stage.
+///   - Returns: A new `StochasticGrid` instance.
+///
+/// - `get_grid(&self, py: Python<'_>) -> PyResult<Vec<PyObject>>`
+///   - Retrieves the grid as a list of Python objects.
+///   - Parameters:
+///     - `py`: Python interpreter instance.
+///   - Returns: A `PyResult` containing a vector of Python objects representing the grid.
+///
+/// - `new_grid(&mut self, grid_duration: usize, delay: Option<usize>) -> Vec<(usize, usize)>`
+///   - Generates a new grid based on the provided duration and optional delay.
+///   - Parameters:
+///     - `grid_duration`: Duration of the grid.
+///     - `delay`: Optional delay before starting the grid generation.
+///   - Returns: A vector of tuples representing the new grid.
+///
+/// - `add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)>`
+///   - Adds a dataset to the grid from a CSV file.
+///   - Parameters:
+///     - `file_name`: Name of the CSV file.
+///     - `file_path`: Optional path to the CSV file.
+///   - Returns: A vector of tuples representing the dataset.
 impl StochasticGrid {
     #[new]
     fn new(n_stages: usize, n_scenarios: usize, stage_duration:usize) -> Self {
@@ -109,10 +139,10 @@ impl StochasticGrid {
             return new_grid;
         }
         #[pyo3(signature = (file_name, file_path=None))]
-        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
+        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> Vec<(usize,usize, f64)> {
             let dataset: Vec<(usize, f64)> = read_csv(file_name, file_path);
             let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
-            let mut samples: Vec<(usize,f64)>   = vec![(0,0.0); total_time];
+            let mut samples: Vec<(usize,usize,f64)>   = vec![(0,0,0.0); total_time];
             let mut start_points: Vec<usize> = vec![0; self.n_scenarios.pow(self.n_stages as u32)];
 
             for stage in 0..self.n_stages + 1 {
@@ -139,7 +169,7 @@ impl StochasticGrid {
                     let scenario: usize = self.n_scenarios.pow(stage as u32);  
                     let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
                     
-                    (key, (s, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
+                    (key, (s,t, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
                 }).collect::<Vec<_>>()
             }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
                 samples[key] = value;
@@ -149,7 +179,6 @@ impl StochasticGrid {
         }
 }
 
-/// A Python module implemented in Rust.
 #[pymodule]
 fn PyStochOpt(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<StochasticGrid>()?;
