@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::PyDict};
 use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
@@ -139,45 +139,51 @@ impl StochasticGrid {
             return new_grid;
         }
         #[pyo3(signature = (file_name, file_path=None))]
-        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> Vec<(usize,usize, f64)> {
+        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> PyResult<Py<PyDict>> {
             let dataset: Vec<(usize, f64)> = read_csv(file_name, file_path);
             let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
             let mut samples: Vec<(usize,usize,f64)>   = vec![(0,0,0.0); total_time];
             let mut start_points: Vec<usize> = vec![0; self.n_scenarios.pow(self.n_stages as u32)];
 
             for stage in 0..self.n_stages + 1 {
-                if stage != 0 {
-                    for s in self.n_scenarios.pow((stage - 1) as u32)..self.n_scenarios.pow(stage as u32) {
-                        let n_branch: usize = self.n_stages + 1 - (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize;
-                        let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                        let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
-                        start_points[s] = startpoint;
-                }}
-                else {
-                    let s = stage;
-                    let n_branch: usize = self.n_stages + 1;
-                    let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                    let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
-                    start_points[s] = startpoint;
-                }
+            if stage != 0 {
+                for s in self.n_scenarios.pow((stage - 1) as u32)..self.n_scenarios.pow(stage as u32) {
+                let n_branch: usize = self.n_stages + 1 - (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize;
+                let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
+                let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
+                start_points[s] = startpoint;
+            }}
+            else {
+                let s = stage;
+                let n_branch: usize = self.n_stages + 1;
+                let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
+                let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
+                start_points[s] = startpoint;
+            }
             }
 
-            
             (0..self.n_scenarios.pow(self.n_stages as u32)).into_par_iter().map(|s| {
-                (self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
-                    let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
-                    let scenario: usize = self.n_scenarios.pow(stage as u32);  
-                    let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
-                    
-                    (key, (s,t, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
-                }).collect::<Vec<_>>()
+            (self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
+                let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
+                let scenario: usize = self.n_scenarios.pow(stage as u32);  
+                let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
+                
+                (key, (s,t, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
+            }).collect::<Vec<_>>()
             }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
-                samples[key] = value;
+            samples[key] = value;
             }); 
+            
+            Python::with_gil(|py| {
+            let py_dict = PyDict::new_bound(py);
+            for (_key, (s, t, value)) in samples.iter().enumerate() {
+            py_dict.set_item((s, t), value).unwrap();
+            }
+            
+            Ok(py_dict.into())
+            })
+        }}
 
-            return samples;
-        }
-}
 
 #[pymodule]
 fn PyStochOpt(m: &Bound<'_, PyModule>) -> PyResult<()> {
