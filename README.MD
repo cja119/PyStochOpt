@@ -12,6 +12,11 @@ This module is built in rust in order to leverage parallelisation to vastly impr
     ```sh
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     ```
+or, you can install through anaconda
+
+    ```sh
+    conda install conda-forge::rust
+    ```
 
 3. Follow the on-screen instructions to complete the installation.
 4. After installation, ensure that Rust is installed correctly by running:
