@@ -182,7 +182,22 @@ impl StochasticGrid {
             
             Ok(py_dict.into())
             })
-        }}
+
+        }
+        #[pyo3(signature = (grid))]
+        fn remove_duplicates(&mut self, grid: Vec<(usize,usize)>) -> Vec<(usize,usize)> {
+            let mut new_grid: Vec<(usize,usize)> = vec![(0,0); grid.len()];
+            let mut seen: Vec<(usize,usize)> = Vec::new();
+            for (i, (s, t)) in grid.iter().enumerate() {
+                if !seen.contains(&(*s, *t)) {
+                    new_grid[i] = (*s, *t);
+                    seen.push((*s,*t));
+                }
+            }
+            seen
+        }
+    
+    }
 
 
 #[pymodule]
