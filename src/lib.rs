@@ -115,7 +115,7 @@ impl StochasticGrid {
             let mut samples: Vec<(usize,f64)>   = vec![(0,0.0); total_time];
             let mut start_points: Vec<usize> = vec![0; self.n_scenarios.pow(self.n_stages as u32)];
 
-            for stage in 0..self.n_stages {
+            for stage in 0..self.n_stages + 1 {
                 if stage != 0 {
                     for s in self.n_scenarios.pow((stage - 1) as u32)..self.n_scenarios.pow(stage as u32) {
                         let n_branch: usize = self.n_stages + 1 - (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize;
@@ -133,15 +133,17 @@ impl StochasticGrid {
             }
 
             
-            for s in 0..self.n_scenarios.pow(self.n_stages as u32) {
-                for t in self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize {
+            (0..self.n_scenarios.pow(self.n_stages as u32)).into_par_iter().map(|s| {
+                (self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
                     let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                     let scenario: usize = self.n_scenarios.pow(stage as u32);  
                     let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
                     
-                    samples[key] = (s, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1);
-                }
-            }
+                    (key, (s, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
+                }).collect::<Vec<_>>()
+            }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
+                samples[key] = value;
+            }); 
 
             return samples;
         }
