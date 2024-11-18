@@ -91,6 +91,8 @@ impl StochasticGrid {
     #[new]
     fn new(n_stages: usize, n_scenarios: usize, stage_duration:usize) -> Self {
         let grid:  Vec<(usize,usize)> =  build_grid(n_stages, n_scenarios, stage_duration);
+
+        
         return StochasticGrid {n_stages, n_scenarios, stage_duration, grid};
     }
 
@@ -186,18 +188,30 @@ impl StochasticGrid {
         }
         #[pyo3(signature = (grid))]
         fn remove_duplicates(&mut self, grid: Vec<(usize,usize)>) -> Vec<(usize,usize)> {
-            let mut new_grid: Vec<(usize,usize)> = vec![(0,0); grid.len()];
             let mut seen: Vec<(usize,usize)> = Vec::new();
-            for (i, (s, t)) in grid.iter().enumerate() {
+            for (_i, (s, t)) in grid.iter().enumerate() {
                 if !seen.contains(&(*s, *t)) {
-                    new_grid[i] = (*s, *t);
                     seen.push((*s,*t));
                 }
             }
             seen
         }
-    
-    }
+
+        fn leaf_nodes(&self, py: Python<'_>) -> PyResult<Py<PyDict>> {
+            let py_dict = PyDict::new_bound(py);
+            let mut seen: Vec<(usize,usize,usize)> = Vec::new();
+            for (_i, (s, t)) in self.grid.iter().enumerate() {
+                let value = self.n_scenarios.pow(self.n_stages as u32 - (*t as f64 / self.stage_duration as f64).floor() as u32);
+                if !seen.contains(&(*s, *t,value)) {
+                    seen.push((*s,*t,value));
+                }}
+            for (_key, (s, t, value)) in seen.iter().enumerate() {
+                py_dict.set_item((s, t), value).unwrap();
+            }
+            
+
+        Ok(py_dict.into())
+    }}
 
 
 #[pymodule]
