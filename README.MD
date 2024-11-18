@@ -110,11 +110,11 @@ sampled_weather_data = stochastic_grid.add_dataset(file_name,file_path)
 grid_168_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168))
 ```
 
-If our truck takes 8 hours to load with hydrogen, we may want to monitor the bays in our fuelling station. In order to do this we need to know how many
-trucks started loading 8 hours ago, as they will now be finished. However, this can be challenging when trying to maintain contiguity for each trajectory.
-For example at branch 2 at time = 172, we need to point into the past to time = 164. But, there is no branch 2 at time = 164 as we have crossed over a fork
-in the stochstic tree, this is actually inherited from branch 0. Thankfully, PyStochOpt handles this complexity and returns the right value when you employ
-the delay term.
+- If our truck takes 8 hours to load with hydrogen, we may want to monitor the bays in our fuelling station. In order to do this we need to know how many
+    trucks started loading 8 hours ago, as they will now be finished. However, this can be challenging when trying to maintain contiguity for each trajectory.
+    For example at branch 2 at time = 172, we need to point into the past to time = 164. But, there is no branch 2 at time = 164 as we have crossed over a fork
+    in the stochstic tree, this is actually inherited from branch 0. Thankfully, PyStochOpt handles this complexity and returns the right value when you employ
+    the delay term.
 
 ```py
 grid_168_hour_8_hour_delay = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168,8))
