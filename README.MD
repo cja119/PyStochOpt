@@ -93,7 +93,7 @@ The challenge here is knowing how many trucks to load with hydrogen each week in
 import PyStochOpt
 from Pyomo.environ import Set, Param, ConcreteModel, Objective, minimize, NonNegativeReals, NonNegativeIntegers, Constraint
 ```
-2. Building the stochastic gris
+2. Building the stochastic grid
     Note that stage 0 (ie our root) always exists, so we have n_stages + 1 weeks duration. Building our base stochastic grid:
 ```py
 stochastic_grid = PyStochOpt.StochasticGrid(n_stages = 3, n_scenarios = 3, stage_duration = 168)
