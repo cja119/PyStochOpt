@@ -86,7 +86,7 @@ This module uses an inheritence based approach wherin leaf nodes are not extende
 ## How the Inheritence Approach Works in This Module
 Consider an energy systems model where you have a windfarm which powers a bank of electrolysers, which then feed into a set of gaseous hydrogen storage tanks. Each week you must decide how many trucks come and collect your hydrogen. Your plant is in a remote area and, as such, is 'islanded' (ie, doesn't have a grid connection). It is crucial that you do not run out of power, so you keep a hydrogen fuel cell on site which can 'cannibalise' some of your hydrogen from storage, in order to keep your safety systems available. You know a weeks' worth of weather in advance but know the weather for each subsequent week can be 'good', 'average' or 'poor'. 
 
-The challenge here is knowing how many trucks to load with hydrogen each week in order to avoid running out of hydrogen incase of poor weather in the future (remember your safety systems can not be without power!). Let's model the system for a month (4 weeks oepration), with our weather data avilable for 1 hours operation. For this, you can build the following stochstic system, and index as follows (example shown using Pyomo). 
+The challenge here is knowing how many trucks to load with hydrogen each week in order to avoid running out of hydrogen incase of poor weather in the future (remember your safety systems can not be without power!). Let's model the system for a month (4 weeks operation), with our weather data avilable for 1 hours operation. For this, you can build the following stochstic system, and index as follows (example shown using Pyomo). 
 
 ```py
 import PyStochOpt
