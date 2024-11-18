@@ -147,13 +147,32 @@ def energy_balance(self,s,t):
 
 model.energy_balance = Constraint(model.time_tree, rule = energy_balance)
 
-def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_8,t_8): 
+def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8): 
     # s,t are from the normal decision tree.
     # s_0,t_0 are from the normal decision tree but with 1 hour delay
     # s_t,t_t are from the trucking decisions
     # s_t8, t_t8 are from the trucking devision but with an 8 hour delay (for loading).
-    
+    if t == 0:
+        return Constraint.Skip
+    if t >= t_t8 and t_8 <= t_t:
+        return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] + self.number_trucks[s_t,t_t] * 2 == 0 # Assuming a charge rate of 2 t/h
+    else:
+        return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] == 0 
 
-# Building a hourly grid with a 1 hour delay. 
-delay_1_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(1,1))
+model.hydrogen_storage_balance = Constraint(model.hydrogen_storage_grid,rule=hydrogen_storage_balance)
+
+def hydrogen_production_limit(self,s,t):
+    return self.hydrogen_production[s,t] <= self.electrolyser_capacity
+
+model.hydrogen_production_limit = Constraint(model.time_tree, rule = hydrogen_storage_balance)
+
+def objective_function(self):
+    return - f(NPV) # Omitting the cost function as this is just for demonstrations' sake.
+
+model.objective = Objective(rule=objective_function, sense = minimise)
+
+model.build_model()
+
+
+
 ```
