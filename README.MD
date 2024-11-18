@@ -132,7 +132,7 @@ hydrogen_storage_grid = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(
 A useful parameter to have is called "leaf nodes". This returns is the number of leaf nodes which correspond to a given branch node, which allows us to calculate correctly weighted averages (by repeat the number of branch nodes the correct number of times. This returns a dictionary, indexed in the same values as the stochastic grid.
 
 ```py
-leaf_nodes = stochastic_grid.get_leaf_nodes()
+leaf_nodes = stochastic_grid.leaf_nodes()
 ```
 
 6. __Putting it all together__
@@ -150,6 +150,7 @@ model.hydrogen_storage_grid = Set(hydrogen_storage_grid, dimen=8)
 # Building Parameters
 model.renewable_power = Param(model.time_tree, initialize=sampled_weather_data)
 model.safety_systems_power = Param(initialise = 5) #GJ/H
+model.leaf_nodes = Param(model.time_tree, leaf_nodesO
 
 # Building Variables
 model.stored_hydrogen = Var(model.time_tree, within=NonNegativeReals)
@@ -159,6 +160,7 @@ model.hydrogen_production = Var(model.time_tree, within=NonNegativeReals)
 model.electrolyser_capacity = Var(within=NonNegativeReals)
 model.number_trucks = Var(grid_168_hour_no_duplicates, within=NonNegativeIntegers)
 model.hydrogen_cannibalistation = Var(model.time_tree, within=NonNegativeReals)
+
 
 # Building Constraints
 def energy_balance(self,s,t):
@@ -185,7 +187,7 @@ def hydrogen_production_limit(self,s,t):
 def objective_function(self):
     # For simplicity's sake, this is just CAPEX + Discounted OPEX (at 4% of CAPEX) - Discounted Revenue (6% Discount factor 30 Yr lifetime)
     return  500000 * self.stored_hydrogen_capacity * (1.55) + 97200 * self.electrolyser_capacity * (1.55) \
-            - 5000 * sum(self.repeat_stages[s,t] * self.hydrogen_production[s,t] for s,t in self.time_tree) * (8760 / 672) * 13.67
+            - 5000 * sum(self.leaf_nodes[s,t] * self.hydrogen_production[s,t] for s,t in self.time_tree) * (8760 / 672) * 13.67
 
 model.hydrogen_production_limit = Constraint(model.time_tree, rule = hydrogen_storage_balance)
 model.hydrogen_storage_balance = Constraint(model.hydrogen_storage_grid,rule=hydrogen_storage_balance)
