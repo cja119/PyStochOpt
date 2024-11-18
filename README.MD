@@ -117,7 +117,7 @@ grid_168_hour_8_hour_delay = zip(stochastic_grid.get_grid(),stochastic_grid.new_
 grid_168_hour_no_duplicates = stochastic_grid.remove_duplicates(stochastic_grid.new_grid(168))
 
 # The need for this final grid will become more clear when we look at the hydrogen storage balance constriant.
-hydrogen_storage_grid = zip(stochastic_grid.get_grid(),,stochastic_grid.new_grid(1,1),stochastic_grid.new_grid(168),stochastic_grid.new_grid(168,8))
+hydrogen_storage_grid = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(1,1),stochastic_grid.new_grid(168),stochastic_grid.new_grid(168,8))
 
 # Let's build the model
 model = ConcreteModel()
