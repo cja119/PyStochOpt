@@ -93,18 +93,21 @@ The challenge here is knowing how many trucks to load with hydrogen each week in
 import PyStochOpt
 from Pyomo.environ import Set, Param, ConcreteModel, Objective, minimize, NonNegativeReals, NonNegativeIntegers, Constraint
 ```
-2. Building the stochastic grid
+2. Building the stochastic grid:
+
     Note that stage 0 (ie our root) always exists, so we have n_stages + 1 weeks duration. Building our base stochastic grid:
 ```py
 stochastic_grid = PyStochOpt.StochasticGrid(n_stages = 3, n_scenarios = 3, stage_duration = 168)
 ```
-3. Loading the weatherdataset
+3. Loading the weatherdataset:
+
     Now generating samples from our weatherdataset. This needs to be a csv with 2 columns, one for time and one for the weatherdata value.
     The sampler will pick a random point and then take a contiguous sample from it, building a full tree structure of samples.
 ```py
 sampled_weather_data = stochastic_grid.add_dataset(file_name,file_path)
 ```
 4.  Building Heirarcichal Grids:
+
     Building a heirarchical grid for a decision made every 168 hours (one week) for our truck devisions. This will, for each time instance in each branch, 'point' to the correct index of the        168 hour grid set. Eg, at time = 175 on branch 1, this will point to the value at time = 168 on branch 1 as this was the last point at which a decision was made.
 ```py
 grid_168_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168))
