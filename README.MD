@@ -157,8 +157,6 @@ model.number_trucks = Var(grid_168_hour_no_duplicates, within=NonNegativeInteger
 def energy_balance(self,s,t):
     return self.renewable_power[s,t] - self.curtailed_energy[s,t] - self.hydrogen_production[s,t] * 120 * 0.6 - self.safety_systems_power == 0
 
-model.energy_balance = Constraint(model.time_tree, rule = energy_balance)
-
 def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8): 
     # s,t are from the normal decision tree.
     # s_0,t_0 are from the normal decision tree but with 1 hour delay
@@ -171,16 +169,15 @@ def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8):
     else:
         return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] == 0 
 
-model.hydrogen_storage_balance = Constraint(model.hydrogen_storage_grid,rule=hydrogen_storage_balance)
-
 def hydrogen_production_limit(self,s,t):
     return self.hydrogen_production[s,t] <= self.electrolyser_capacity
-
-model.hydrogen_production_limit = Constraint(model.time_tree, rule = hydrogen_storage_balance)
 
 def objective_function(self):
     return - f(NPV) # Omitting the cost function as this is just for demonstrations' sake.
 
+model.hydrogen_production_limit = Constraint(model.time_tree, rule = hydrogen_storage_balance)
+model.hydrogen_storage_balance = Constraint(model.hydrogen_storage_grid,rule=hydrogen_storage_balance)
+model.energy_balance = Constraint(model.time_tree, rule = energy_balance)
 model.objective = Objective(rule=objective_function, sense = minimise)
 
 model.build_model()
