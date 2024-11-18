@@ -108,7 +108,7 @@ sampled_weather_data = stochastic_grid.add_dataset(file_name,file_path)
 ```
 4.  Building Heirarcichal Grids:
 
-    Building a heirarchical grid for a decision made every 168 hours (one week) for our truck devisions. This will, for each time instance in each branch, 'point' to the correct index of the        168 hour grid set. Eg, at time = 175 on branch 1, this will point to the value at time = 168 on branch 1 as this was the last point at which a decision was made.
+- Building a heirarchical grid for a decision made every 168 hours (one week) for our truck devisions. This will, for each time instance in each branch, 'point' to the correct index of the        168 hour grid set. Eg, at time = 175 on branch 1, this will point to the value at time = 168 on branch 1 as this was the last point at which a decision was made.
 ```py
 grid_168_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168))
 ```
