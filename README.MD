@@ -37,7 +37,7 @@ For more information, refer to the official documentation:
 
 ### Step 3: Clone this repository
 ```sh
-git clone https://github.com/cja119/bfgs.git
+git clone https://github.com/cja119/PyStochOpt.git
 ```
 ### Step 4: Build The Module
 
