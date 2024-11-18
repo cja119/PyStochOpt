@@ -154,7 +154,7 @@ def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8):
     # s_t8, t_t8 are from the trucking devision but with an 8 hour delay (for loading).
     if t == 0:
         return Constraint.Skip
-    if t >= t_t8 and t_8 <= t_t:
+    if t_8 < t_t: # If our finish loading time is less than our start loading time. (When we are finished loading the pointers will point to the same value).
         return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] + self.number_trucks[s_t,t_t] * 2 == 0 # Assuming a charge rate of 2 t/h
     else:
         return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] == 0 
