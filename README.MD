@@ -88,7 +88,7 @@ Consider an energy systems model where you have a windfarm which powers a bank o
 
 The challenge here is knowing how many trucks to load with hydrogen each week in order to avoid running out of hydrogen incase of poor weather in the future (remember your safety systems can not be without power!). Let's model the system for a month (4 weeks operation), with our weather data avilable for 1 hours operation. For this, you can build the following stochstic system, and index as follows (example shown using Pyomo). 
 
-1. Importing the necessary packages
+1. __Importing the necessary packages__
 ```py
 import PyStochOpt
 from Pyomo.environ import Set, Param, ConcreteModel, Objective, minimize, NonNegativeReals, NonNegativeIntegers, Constraint
