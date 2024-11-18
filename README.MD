@@ -116,6 +116,9 @@ grid_168_hour_8_hour_delay = zip(stochastic_grid.get_grid(),stochastic_grid.new_
 # If we call the remove_duplicates functionality on this grid, it will allow us to generate a list containing single values. 
 grid_168_hour_no_duplicates = stochastic_grid.remove_duplicates(stochastic_grid.new_grid(168))
 
+# The need for this final grid will become more clear when we look at the hydrogen storage balance constriant.
+hydrogen_storage_grid = zip(stochastic_grid.get_grid(),,stochastic_grid.new_grid(1,1),stochastic_grid.new_grid(168),stochastic_grid.new_grid(168,8))
+
 # Let's build the model
 model = ConcreteModel()
 
@@ -124,6 +127,7 @@ model.time_tree = Set(initalize = stochastic_grid.get_grid(),dimen=2)
 model.grid_168_hour = Set(initialize = grid_168_hour, dimen=4)
 model.grid_168_hour_8_hour_delay = Set(grid_168_hour_8_hour_delay,dimen=6)
 model.grid_168_hour_no_duplicates = Set(grid_168_hour_no_duplicates, dimen=2)
+model.hydrogen_storage_grid = Set(hydrogen_storage_grid, dimen=8)
 
 # Building Parameters
 model.renewable_power = Param(model.time_tree, initialize=sampled_weather_data)
@@ -132,15 +136,23 @@ model.safety_systems_power = Param(initialise = 5) #GJ/H
 # Building Variables
 model.stored_hydrogen = Var(model.time_tree, within=NonNegativeReals)
 model.stored_hydrogen_capacity = Var(within=NonNegativeReals)
-model.electrolyser_capacity = Var(model.time_tree, within=NonNegativeReals)
+model.curtailed_energy = Var(model.time_tree, within=NonNegativeReals)
+model.hydrogen_production = Var(model.time_tree, within=NonNegativeReals)
 model.electrolyser_capacity = Var(within=NonNegativeReals)
 model.number_trucks = Var(grid_168_hour_no_duplicates, within=NonNegativeIntegers)
 
 # Building Constraints
-def energy_balance():
-    return self.renewable_power
+def energy_balance(self,s,t):
+    return self.renewable_power[s,t] - self.curtailed_energy[s,t] - self.hydrogen_production[s,t] * 120 * 0.6 - self.safety_systems_power == 0
 
-model.energy_balance = Constraint(
+model.energy_balance = Constraint(model.time_tree, rule = energy_balance)
+
+def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_8,t_8): 
+    # s,t are from the normal decision tree.
+    # s_0,t_0 are from the normal decision tree but with 1 hour delay
+    # s_t,t_t are from the trucking decisions
+    # s_t8, t_t8 are from the trucking devision but with an 8 hour delay (for loading).
+    
 
 # Building a hourly grid with a 1 hour delay. 
 delay_1_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(1,1))
