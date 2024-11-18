@@ -128,8 +128,14 @@ The need for this final grid will become more clear when we look at the hydrogen
 ```py
 hydrogen_storage_grid = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(1,1),stochastic_grid.new_grid(168),stochastic_grid.new_grid(168,8))
 ````
+7. __Building Repeat Stages__
+A useful parameter to have is called "leaf nodes". This returns is the number of leaf nodes which correspond to a given branch node, which allows us to calculate correctly weighted averages (by repeat the number of branch nodes the correct number of times. This returns a dictionary, indexed in the same values as the stochastic grid.
 
-5. __Putting it all together__
+```py
+leaf_nodes = stochastic_grid.get_leaf_nodes()
+```
+
+6. __Putting it all together__
 ```py
 # Let's build the model
 model = ConcreteModel()
@@ -152,10 +158,11 @@ model.curtailed_energy = Var(model.time_tree, within=NonNegativeReals)
 model.hydrogen_production = Var(model.time_tree, within=NonNegativeReals)
 model.electrolyser_capacity = Var(within=NonNegativeReals)
 model.number_trucks = Var(grid_168_hour_no_duplicates, within=NonNegativeIntegers)
+model.hydrogen_cannibalistation = Var(model.time_tree, within=NonNegativeReals)
 
 # Building Constraints
 def energy_balance(self,s,t):
-    return self.renewable_power[s,t] - self.curtailed_energy[s,t] - self.hydrogen_production[s,t] * 120 * 0.6 - self.safety_systems_power == 0
+    return self.renewable_power[s,t] - self.curtailed_energy[s,t] + self.hydrogen_cannibalisation[s,t] * 120 * 0.5 - self.hydrogen_production[s,t] * 120 * 0.6 - self.safety_systems_power == 0
 
 def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8): 
     # s,t are from the normal decision tree.
@@ -169,11 +176,16 @@ def hydrogen_storage_balance(self,s,t,s_0,t_0,s_t,t_t,s_t8,t_t8):
     else:
         return self.stored_hydrogen[s,t] - self.stored_hydrogen[s_0,t_0] - self.hydrogen_production[s,t] == 0 
 
+def hydrogen_storage_limit(self,s,t):
+    reutrn self.stored_hydrogen[s,t] - self.stored_hydrogen_capacity <= 0
+
 def hydrogen_production_limit(self,s,t):
     return self.hydrogen_production[s,t] <= self.electrolyser_capacity
 
 def objective_function(self):
-    return - f(NPV) # Omitting the cost function as this is just for demonstrations' sake.
+    # For simplicity's sake, this is just CAPEX + Discounted OPEX (at 4% of CAPEX) - Discounted Revenue (6% Discount factor 30 Yr lifetime)
+    return  500000 * self.stored_hydrogen_capacity * (1.55) + 97200 * self.electrolyser_capacity * (1.55) \
+            - 5000 * sum(self.repeat_stages[s,t] * self.hydrogen_production[s,t] for s,t in self.time_tree) * (8760 / 672) * 13.67
 
 model.hydrogen_production_limit = Constraint(model.time_tree, rule = hydrogen_storage_balance)
 model.hydrogen_storage_balance = Constraint(model.hydrogen_storage_grid,rule=hydrogen_storage_balance)
