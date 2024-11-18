@@ -115,21 +115,24 @@ grid_168_hour = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168))
     For example at branch 2 at time = 172, we need to point into the past to time = 164. But, there is no branch 2 at time = 164 as we have crossed over a fork
     in the stochstic tree, this is actually inherited from branch 0. Thankfully, PyStochOpt handles this complexity and returns the right value when you employ
     the delay term.
+
 ```py
-
 grid_168_hour_8_hour_delay = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(168,8))
-
 ```
+
     When we build our variable sets, we don't want a list of values which are repeated for each time point (as it will have lots of duplicates)
     If we call the remove_duplicates functionality on this grid, it will allow us to generate a list containing single values. 
 
 ```py
 grid_168_hour_no_duplicates = stochastic_grid.remove_duplicates(stochastic_grid.new_grid(168))
 ```
+
     The need for this final grid will become more clear when we look at the hydrogen storage balance constriant.
+
 ```py
 hydrogen_storage_grid = zip(stochastic_grid.get_grid(),stochastic_grid.new_grid(1,1),stochastic_grid.new_grid(168),stochastic_grid.new_grid(168,8))
 ````
+
 5. Pussing it all together
 ```py
 # Let's build the model
