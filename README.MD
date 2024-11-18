@@ -12,7 +12,7 @@ This module is built in rust in order to leverage parallelisation to vastly impr
     ```sh
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     ```
-or, you can install through anaconda
+    Or through anaconda...
 
     ```sh
     conda install conda-forge::rust
