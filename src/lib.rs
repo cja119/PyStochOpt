@@ -3,7 +3,7 @@ use pyo3::{prelude::*, types::PyDict};
 use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
-use rand::Rng;
+use rand::{Rng, SeedableRng};
 
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
@@ -35,7 +35,8 @@ struct StochasticGrid {
     n_stages: usize,
     n_scenarios: usize,
     stage_duration: usize,
-    grid: Vec<(usize,usize)> ,
+    grid: Vec<(usize,usize)>,
+    seed: u64,
 }
 
 fn build_grid(n_stages: usize, n_scenarios: usize,stage_duration: usize) ->  Vec<(usize,usize)> {
@@ -89,11 +90,13 @@ fn build_grid(n_stages: usize, n_scenarios: usize,stage_duration: usize) ->  Vec
 ///   - Returns: A vector of tuples representing the dataset.
 impl StochasticGrid {
     #[new]
-    fn new(n_stages: usize, n_scenarios: usize, stage_duration:usize) -> Self {
+    #[pyo3(signature = (n_stages, n_scenarios, stage_duration, seed=None))]
+    fn new(n_stages: usize, n_scenarios: usize, stage_duration:usize, seed:Option<u64> ) -> Self {
+        let seed: u64 = seed.unwrap_or(rand::thread_rng().gen());
         let grid:  Vec<(usize,usize)> =  build_grid(n_stages, n_scenarios, stage_duration);
 
         
-        return StochasticGrid {n_stages, n_scenarios, stage_duration, grid};
+        return StochasticGrid {n_stages, n_scenarios, stage_duration, grid, seed};
     }
 
     fn get_grid(&self, py: Python<'_>) -> PyResult<Vec<PyObject>>  {
@@ -152,14 +155,16 @@ impl StochasticGrid {
                 for s in self.n_scenarios.pow((stage - 1) as u32)..self.n_scenarios.pow(stage as u32) {
                 let n_branch: usize = self.n_stages + 1 - (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize;
                 let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
+                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed);
+                let startpoint = rng.gen_range(0..dataset.len() - n_samp);
                 start_points[s] = startpoint;
             }}
             else {
                 let s = stage;
                 let n_branch: usize = self.n_stages + 1;
                 let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                let startpoint = rand::thread_rng().gen_range(0..dataset.len() - n_samp);
+                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed);
+                let startpoint = rng.gen_range(0..dataset.len() - n_samp);
                 start_points[s] = startpoint;
             }
             }
