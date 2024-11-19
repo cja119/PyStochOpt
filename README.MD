@@ -67,6 +67,12 @@ grid_48_hour = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(48))
 
 # Building a hourly grid with a 1 hour delay. 
 delay_1_hour = zip(StochasticGrid.get_grid(),StochasticGrid.new_grid(1,1))
+
+# Loading a weather dataset for contiguos grid sampling
+sampled_dataset = stochastic_grid.add_dataset(file_name='FileName.csv',file_path='/Filepath/')
+
+# Recalling the number of leafnodes corresponding to each branch
+leaf_nodes = stochastic_grid.leaf_nodes()
 ```
 
 # Theory
