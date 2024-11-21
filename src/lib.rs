@@ -114,6 +114,7 @@ impl StochasticGrid {
         let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
         let delay: usize = delay.unwrap_or(0);
         let mut new_grid: Vec<(usize,usize)>   = vec![(0,0); total_time];
+        
         (0..((self.n_stages+1) * self.stage_duration)).into_par_iter().map(|t| {
             if t < delay {     
                 let grid_t:usize = ((t as f64 / grid_duration as f64).floor() as usize) * grid_duration as usize;
@@ -123,7 +124,7 @@ impl StochasticGrid {
                 (0..scenario).map(|s| {
                     let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
                     let n_stages = self.n_stages;
-                    let ratio: usize = n_stages.pow((stage - grid_stage) as u32);
+                    let ratio: usize = self.n_scenarios.pow((stage - grid_stage) as u32);
                     (key, ((s as f64/ratio as f64).floor() as usize, 0))
                     }).collect::<Vec<_>>()
                 } 
@@ -134,7 +135,7 @@ impl StochasticGrid {
                     let scenario: usize = self.n_scenarios.pow(stage as u32);  
                     (0..scenario).map(|s| {
                         let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
-                        let ratio: usize = self.n_stages.pow((stage - grid_stage) as u32);
+                        let ratio: usize = self.n_scenarios.pow((stage - grid_stage) as u32);
                         (key, ((s as f64/ratio as f64).floor() as usize, grid_t))
                         }).collect::<Vec<_>>()
                     }
@@ -143,6 +144,7 @@ impl StochasticGrid {
             }); 
             return new_grid;
         }
+
         #[pyo3(signature = (file_name, file_path=None))]
         fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>) -> PyResult<Py<PyDict>> {
             let dataset: Vec<(usize, f64)> = read_csv(file_name, file_path);
