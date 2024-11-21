@@ -123,7 +123,6 @@ impl StochasticGrid {
                 let scenario: usize = self.n_scenarios.pow(stage as u32);  
                 (0..scenario).map(|s| {
                     let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
-                    let n_stages = self.n_stages;
                     let ratio: usize = self.n_scenarios.pow((stage - grid_stage) as u32);
                     (key, ((s as f64/ratio as f64).floor() as usize, 0))
                     }).collect::<Vec<_>>()
