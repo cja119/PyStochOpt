@@ -170,8 +170,8 @@ impl StochasticGrid {
             }
             }
 
-            (0..self.n_scenarios.pow(self.n_stages as u32)).into_par_iter().map(|s| {
-            (self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
+            (0..(self.n_scenarios.pow(self.n_stages as u32))).into_par_iter().map(|s| {
+            (self.stage_duration * (s as f64 + 0.99999999).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
                 let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                 let scenario: usize = self.n_scenarios.pow(stage as u32);  
                 let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
@@ -181,6 +181,7 @@ impl StochasticGrid {
             }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
             samples[key] = value;
             }); 
+            print!("{:?}", samples.len());
             
             Python::with_gil(|py| {
             let py_dict = PyDict::new_bound(py);
