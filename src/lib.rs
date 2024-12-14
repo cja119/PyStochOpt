@@ -156,7 +156,7 @@ impl StochasticGrid {
                 for s in self.n_scenarios.pow((stage - 1) as u32)..self.n_scenarios.pow(stage as u32) {
                 let n_branch: usize = self.n_stages + 1 - (s as f64 + 1.0).log(self.n_scenarios as f64).ceil() as usize;
                 let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed);
+                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed + s as u64);
                 let startpoint = rng.gen_range(0..dataset.len() - n_samp);
                 start_points[s] = startpoint;
             }}
@@ -164,7 +164,7 @@ impl StochasticGrid {
                 let s = stage;
                 let n_branch: usize = self.n_stages + 1;
                 let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
-                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed);
+                let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed + s as u64);
                 let startpoint = rng.gen_range(0..dataset.len() - n_samp);
                 start_points[s] = startpoint;
             }
