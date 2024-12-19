@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use pyo3::{prelude::*, types::PyDict};
-use rayon::{prelude::*, vec};
+use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::{Rng, SeedableRng};
@@ -116,7 +116,7 @@ impl StochasticGrid {
 
     #[pyo3(signature = (grid_duration, delay=None))]
     fn new_grid(&mut self, py: Python<'_>, grid_duration: usize, delay: Option<usize>) -> PyResult<Vec<PyObject>>  {
-        let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
+
         let delay: usize = delay.unwrap_or(0);
         let mut new_grid= BTreeMap::new();
     
