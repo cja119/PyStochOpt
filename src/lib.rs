@@ -97,28 +97,29 @@ impl StochasticGrid {
         let seed: u64 = seed.unwrap_or(rand::thread_rng().gen());
         let grid:  Vec<(usize,usize,usize)> =  build_grid(n_stages, n_scenarios, stage_duration);
         let mut cluster_grid: BTreeMap<(usize, usize,usize), (usize, usize,usize)> = BTreeMap::new();
-        let keep_keys: BTreeMap<(usize,usize,usize), (usize, usize,usize)> = cluster_grid.clone();
         for value in &grid {
             cluster_grid.insert(*value, *value);
         }
-    
+        let keep_keys: BTreeMap<(usize,usize,usize), (usize, usize,usize)> = cluster_grid.clone();
         return StochasticGrid {n_stages, n_scenarios, stage_duration, grid,cluster_grid,keep_keys, seed};
     }
 
     fn get_grid(&self, py: Python<'_>) -> PyResult<Vec<PyObject>>  {
         let mut python_list: Vec<PyObject> = Vec::new();
-        for i in &self.keep_keys{
-            let tuple = self.cluster_grid.get(i.0).unwrap_or(&(0 as usize, 0 as usize, 1 as usize));
-            python_list.push(PyTuple::new_bound(py, &[tuple.0, tuple.1, tuple.2]).to_object(py));}
+
+        for i in &self.keep_keys.keys().cloned().collect::<Vec<(usize, usize, usize)>>() {
+            let j = self.cluster_grid.get(&i).unwrap();
+            python_list.push(PyTuple::new_bound(py, &[j.0,j.1,j.2]).to_object(py));}
+            
         return  Ok(python_list);
     }
 
     #[pyo3(signature = (grid_duration, delay=None))]
-    fn new_grid(&mut self, grid_duration: usize, delay: Option<usize>) -> Vec<(usize,usize,usize)> {
+    fn new_grid(&mut self, py: Python<'_>, grid_duration: usize, delay: Option<usize>) -> PyResult<Vec<PyObject>>  {
         let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
         let delay: usize = delay.unwrap_or(0);
-        let mut new_grid: Vec<(usize,usize,usize)>   = vec![(0,0,1); total_time];
-        
+        let mut new_grid= BTreeMap::new();
+    
         (0..((self.n_stages+1) * self.stage_duration)).into_par_iter().map(|t| {
             if t < delay {     
                 let grid_t:usize = ((t as f64 / grid_duration as f64).floor() as usize) * grid_duration as usize;
@@ -143,16 +144,18 @@ impl StochasticGrid {
                         }).collect::<Vec<_>>()
                     }
             }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
-                new_grid[key] = self.cluster_grid.get(&value).unwrap_or(&(0 as usize, 0 as usize,1 as usize)).clone();
+                new_grid.insert(self.grid[key],*self.cluster_grid.get(&value).unwrap_or(&(0 as usize, 0 as usize, 1 as usize)));
             }); 
 
-            let mut dupe_grid = new_grid.clone();
+            
+            let mut python_list: Vec<PyObject> = Vec::new();
 
-            for i in (0..new_grid.len()).rev() {
-                if !self.keep_keys.contains_key(&new_grid[i]) {
-                    dupe_grid.remove(i);}
-                }
-            return dupe_grid;
+            for i in &self.keep_keys.keys().cloned().collect::<Vec<(usize, usize, usize)>>() {
+                let j = new_grid.get(&i).unwrap();
+                python_list.push(PyTuple::new_bound(py, &[j.0,j.1,j.2]).to_object(py));}
+
+            
+            return Ok(python_list);
         }
 
         #[pyo3(signature = (file_name, file_path=None,cluster=false, epsilon=0.01))]
@@ -197,7 +200,7 @@ impl StochasticGrid {
 
             if cluster.unwrap_or(true) {
                 self.cluster_grid = BTreeMap::new();
-                self.keep_keys = BTreeMap::new();
+                let mut keep_keys = BTreeMap::new();
                 let mut old: Vec<f64> = vec![0.0; self.n_scenarios.pow(self.n_stages as u32)];
                 let mut count: Vec<usize> = vec![0; self.n_scenarios.pow(self.n_stages as u32)];
                 let mut hold: Vec<Vec<(usize,usize,usize,f64)>> = vec![Vec::new();self.n_scenarios.pow(self.n_stages as u32)];
@@ -212,15 +215,24 @@ impl StochasticGrid {
                     else {
                         let master: (usize, usize, usize) = (hold[*s][0].0,hold[*s][0].1,count[*s]);
                         new_samples.push((*s,*t+1-count[*s],count[*s],old[*s]));
-                        self.keep_keys.insert((master.0,master.1,1),(master.0,master.1,1));
+                        keep_keys.insert((master.0,master.1,1),(master.0,master.1,1));
                         for (_hkey,(_s,_t,_d,_value)) in hold[*s].iter().enumerate() {
-                            self.cluster_grid.insert((*_s,*_t, *_d), master);
+                            self.cluster_grid.insert((*_s,*_t, 1), master);
                         }
                         old[*s] = *value;
                         count[*s] = 0;
                         hold[*s] = Vec::new();
                     }
                 }
+                
+                self.keep_keys = BTreeMap::new();
+
+                for (_key, (s, t, d)) in self.grid.iter().enumerate() {
+                    if keep_keys.contains_key(&(*s,*t,*d)) {
+                        self.keep_keys.insert((*s,*t,*d), (*s,*t,*d));
+                    }
+                }
+
             } else {
                 new_samples = samples;
             }
