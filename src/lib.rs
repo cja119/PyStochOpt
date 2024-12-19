@@ -158,8 +158,8 @@ impl StochasticGrid {
             return Ok(python_list);
         }
 
-        #[pyo3(signature = (file_name, file_path=None,cluster=false, epsilon=0.01))]
-        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>,cluster: Option<bool>,epsilon: Option<f64>) -> PyResult<Py<PyDict>> {
+        #[pyo3(signature = (file_name, file_path=None,cluster=false, epsilon=0.01,cluster_points=None))]
+        fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>,cluster: Option<bool>,epsilon: Option<f64>,cluster_points:Option<Vec<(usize,usize)>>) -> PyResult<Py<PyDict>> {
             let dataset: Vec<(usize, f64)> = read_csv(file_name, file_path);
             let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
             let mut samples: Vec<(usize,usize, usize,f64)>   = vec![(0,0,1,0.0); total_time];
@@ -209,7 +209,21 @@ impl StochasticGrid {
 
                     count[*s] += 1;
                     hold[*s].push((*s,*t,*d,*value));
-                    if (value - old[*s]).abs() < epsilon.unwrap_or(0.01)   && (t + 1) % self.stage_duration != 0 && (t + 1) % self.stage_duration != self.stage_duration - 1 {
+                    let mut cluster_break_1= true;
+                    let mut cluster_break_2= true;
+                    
+                    if let Some(ref cluster_points) = cluster_points {
+                        cluster_break_1 = cluster_points
+                            .iter()
+                            .all(|&cluster_point| (*t as i32 - cluster_point.1 as i32 + 1) % cluster_point.0 as i32 != 0);
+                        cluster_break_2   = cluster_points
+                            .iter()
+                            .all(|&cluster_point| (*t as i32 - cluster_point.1 as i32) % cluster_point.0 as i32 != 0);
+                    } else {
+
+                    }
+                
+                    if (value - old[*s]).abs() < epsilon.unwrap_or(0.01) && (t + 1) % self.stage_duration != 0 && (t) % self.stage_duration != 0 && (t + 1) % self.stage_duration != self.stage_duration - 1  && (t) % self.stage_duration != self.stage_duration - 1 && cluster_break_1 && cluster_break_2 {
                         continue;
                     }
                     else {
