@@ -209,7 +209,7 @@ impl StochasticGrid {
 
                     count[*s] += 1;
                     hold[*s].push((*s,*t,*d,*value));
-                    if (value - old[*s]).abs() < epsilon.unwrap_or(0.01)   && t % self.stage_duration != 0 {
+                    if (value - old[*s]).abs() < epsilon.unwrap_or(0.01)   && (t + 1) % self.stage_duration != 0 && (t + 1) % self.stage_duration != self.stage_duration - 1 {
                         continue;
                     }
                     else {
