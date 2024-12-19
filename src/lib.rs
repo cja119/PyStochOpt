@@ -266,15 +266,19 @@ impl StochasticGrid {
 
         fn leaf_nodes(&self, py: Python<'_>) -> PyResult<Py<PyDict>> {
             let py_dict = PyDict::new_bound(py);
-            let mut seen: Vec<(usize,usize,usize)> = Vec::new();
-            for (_i, (s, t,_d)) in self.grid.iter().enumerate() {
+            let mut seen= BTreeMap::new();
+            for (_i, (s, t,d)) in self.grid.iter().enumerate() {
                 let value = self.n_scenarios.pow(self.n_stages as u32 - (*t as f64 / self.stage_duration as f64).floor() as u32);
-                if !seen.contains(&(*s, *t,value)) {
-                    seen.push((*s,*t,value));
-                }}
-            for (_key, (s, t, value)) in seen.iter().enumerate() {
-                py_dict.set_item((s, t), value).unwrap();
-            }
+                seen.insert((*s,*t,*d),value);
+                }
+            
+
+            for i in &self.keep_keys.keys().cloned().collect::<Vec<(usize, usize, usize)>>() {
+                    let j = seen.get(&i).unwrap();
+                    let k = self.cluster_grid.get(&i).unwrap();
+                    py_dict.set_item((k.0, k.1,k.2), j).unwrap();}
+
+
         Ok(py_dict.into())
     }}
 
