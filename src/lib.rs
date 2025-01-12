@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::{Rng, SeedableRng};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, f32::consts::E};
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let path = match file_path {
@@ -42,14 +42,16 @@ struct StochasticGrid {
 }
 
 fn build_grid(n_stages: usize, n_scenarios: usize,stage_duration: usize) ->  Vec<(usize,usize,usize)> {
-    let total_time: usize = stage_duration * (n_scenarios.pow(n_stages as u32+ 1) - 1) / (n_scenarios - 1);
+    let total_time: usize = if n_scenarios != 1{stage_duration * (n_scenarios.pow(n_stages as u32+ 1) - 1) / (n_scenarios - 1)}
+    else {stage_duration * (n_stages + 1)};
     let mut grid: Vec<(usize,usize,usize)>   = vec![(0,0,1); total_time];
 
     (0..((n_stages+1) * stage_duration)).into_par_iter().map(|t| {
         let stage: usize = (t as f64 / stage_duration as f64).floor() as usize;
         let scenario: usize = n_scenarios.pow(stage as u32);
         (0..scenario).map(|s| {
-            let key: usize = scenario * (t - stage * stage_duration) + s + stage_duration * (scenario -1) / (n_scenarios - 1);
+            let key: usize = if n_scenarios != 1 {scenario * (t - stage * stage_duration) + s + stage_duration * (scenario -1) / (n_scenarios - 1)}
+            else {t};
             (key, (s, t,1 as usize))
         }).collect::<Vec<_>>()
     }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
@@ -127,7 +129,8 @@ impl StochasticGrid {
                 let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                 let scenario: usize = self.n_scenarios.pow(stage as u32);  
                 (0..scenario).map(|s| {
-                    let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
+                    let key: usize = if self.n_scenarios != 1 {scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1)}
+                    else {t};
                     let ratio: usize = self.n_scenarios.pow((stage - grid_stage) as u32);
                     (key, ((s as f64/ratio as f64).floor() as usize, 0,1 as usize))
                     }).collect::<Vec<_>>()
@@ -138,7 +141,8 @@ impl StochasticGrid {
                     let stage: usize = (t  as f64 / self.stage_duration as f64).floor() as usize;
                     let scenario: usize = self.n_scenarios.pow(stage as u32);  
                     (0..scenario).map(|s| {
-                        let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
+                        let key: usize = if self.n_scenarios != 1{scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1)}
+                        else {t};
                         let ratio: usize = self.n_scenarios.pow((stage - grid_stage) as u32);
                         (key, ((s as f64/ratio as f64).floor() as usize, grid_t,1 as usize))
                         }).collect::<Vec<_>>()
@@ -161,7 +165,11 @@ impl StochasticGrid {
         #[pyo3(signature = (file_name, file_path=None,cluster=false, epsilon=0.01,cluster_points=None))]
         fn add_dataset(&mut self, file_name: &str, file_path: Option<&str>,cluster: Option<bool>,epsilon: Option<f64>,cluster_points:Option<Vec<(usize,usize)>>) -> PyResult<Py<PyDict>> {
             let dataset: Vec<(usize, f64)> = read_csv(file_name, file_path);
-            let total_time: usize = self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32+ 1) - 1) / (self.n_scenarios - 1);
+            let total_time: usize = if self.n_scenarios != 1 {
+                self.stage_duration * (self.n_scenarios.pow(self.n_stages as u32 + 1) - 1) / (self.n_scenarios - 1)
+            } else {
+                self.stage_duration * (self.n_stages + 1)
+            };
             let mut samples: Vec<(usize,usize, usize,f64)>   = vec![(0,0,1,0.0); total_time];
             let mut start_points: Vec<usize> = vec![0; self.n_scenarios.pow(self.n_stages as u32)];
 
@@ -177,9 +185,11 @@ impl StochasticGrid {
             else {
                 let s = stage;
                 let n_branch: usize = self.n_stages + 1;
-                let n_samp: usize = (n_branch * (n_branch + 1) * (n_branch + 2) / 6) * self.stage_duration;
+                let n_samp: usize = (n_branch) * self.stage_duration;
                 let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed + s as u64);
+                println!("{} {}",dataset.len(),n_samp);
                 let startpoint = rng.gen_range(0..dataset.len() - n_samp);
+                
                 start_points[s] = startpoint;
             }
             }
@@ -188,8 +198,12 @@ impl StochasticGrid {
             (self.stage_duration * (s as f64 + 0.99999999).log(self.n_scenarios as f64).ceil() as usize..self.stage_duration * (self.n_stages + 1) as usize).map(|t| {
                 let stage: usize = (t as f64 / self.stage_duration as f64).floor() as usize;
                 let scenario: usize = self.n_scenarios.pow(stage as u32);  
-                let key: usize = scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1);
-                
+                let key: usize = if self.n_scenarios != 1 {
+                 scenario * (t - stage * self.stage_duration) + s + self.stage_duration * (scenario -1) / (self.n_scenarios - 1)
+                }
+                else {
+                t
+                };
                 (key, (s,t,1, dataset[start_points[s] + t - self.stage_duration * (s as f64 + 1.0).log(self.n_scenarios as f64).ceil()  as usize].1))
             }).collect::<Vec<_>>()
             }).flatten().collect::<Vec<_>>().into_iter().for_each(|(key, value)| {
