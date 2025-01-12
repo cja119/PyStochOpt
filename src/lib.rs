@@ -187,7 +187,6 @@ impl StochasticGrid {
                 let n_branch: usize = self.n_stages + 1;
                 let n_samp: usize = (n_branch) * self.stage_duration;
                 let mut rng = rand::rngs::StdRng::seed_from_u64(self.seed + s as u64);
-                println!("{} {}",dataset.len(),n_samp);
                 let startpoint = rng.gen_range(0..dataset.len() - n_samp);
                 
                 start_points[s] = startpoint;
