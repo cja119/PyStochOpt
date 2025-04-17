@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::{Rng, SeedableRng};
-use std::{collections::BTreeMap, f32::consts::E};
+use std::{collections::BTreeMap};
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let path = match file_path {
