@@ -2,7 +2,7 @@
 
 PyStochOpt is an indexing and sampling module, primarily designed to aid in building stochastic energy systems models in python. This module is build in rust and can be used to remove the need for computationally expensive non anticipativity constraints. This module is used extensively throughout my research. See the theory section for more!
 
-![Stochastic Tree Diagram](Stochastic_tree.png)
+![Stochastic Tree Diagram](png/Stochastic_tree.png)
 
 ## Quickstart
 This module is built in rust in order to leverage parallelisation to vastly improve execution speeds. As such it is necessary to install rust on your local machine to use this package. 
@@ -84,7 +84,7 @@ As aforementioned, this module is designed (primarily) for the use in energy sys
 A key criterion of our stochastic tree is that it must maintain perfect contiguity for each trajectory from the root, all the way to the leaf nodes. This can be challenging to achieve and is often performed by 'bundling' together trajectories and subsequently employing specific constraints to make them act as one if they share common branches. (More on this below!)
 
 ## An Alternative Approach to Anticipativity
-![Non Anticipativity Structure Diagram](Diagram.png)
+![Non Anticipativity Structure Diagram](png/Diagram.png)
 ### Traditional Approach to Stochastic Optimisation
 Typically for a stochastic optimisation model, the indices of all leaf nodes on the stochastic tree will be extended throughout the whole time domain. In order to prevent the optimisation model from being able to anticipate future events a set of 'non anticipaticity constraints' are used to enforce equality of variables in leaf nodes which share common branches (at times in the domain before the branches have split). A diagram of this structure is shown above: The 'greyed out' arrows represent the branches which are enforced to be equal to eachother. The black arrows represent 'leader branches' for which the variables are free to be optimised. The issue with this approach is that it generates lots of uneccesary variables in the optimisation model which just exist to mirror other variables. Furthermore, the indexing of these constraints is such that it is often best to build them individually using for loops and index based conditions. This results in a very complex presolve in certain optimisation languages, due to slow matrix generation as thousands of individual constraints have to be added to the model. 
 
