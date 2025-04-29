@@ -11,13 +11,13 @@ fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
         Some(path) => format!("{}/{}", path, file_name),
         None => {
             let target_root: String = Python::with_gil(|py| {
-                let module = py.import_bound("py_meteor")?;
+                let module = py.import_bound("meteor_py")?;
                 let module_path: String = module.getattr("__file__")?.extract()?;
                 let dir = std::path::Path::new(&module_path)
                     .parent()
                     .expect("no parent dir")
                     .to_path_buf();
-                Ok::<String, pyo3::PyErr>(dir.to_string_lossy().to_string())
+                Ok::<String, pyo3::PyErr>(dir.to_string_lossy().to_string()+"/data")
             }).expect("Failed to get target root");
 
             format!("{}/{}", target_root.to_string(), file_name)
