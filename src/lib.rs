@@ -11,6 +11,7 @@ fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
         Some(path) => format!("{}/{}", path, file_name),
         None => format!("{}/{}", "../meteor_py/data", file_name),
     };
+    println!("Reading CSV file: {}", path);
     let mut rdr = Reader::from_path(path).expect("Failed to open CSV file");
     let mut rows: Vec<(usize, f64)> = Vec::new();
     for (i, result) in rdr.records().enumerate() {
