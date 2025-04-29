@@ -1,23 +1,26 @@
 #![allow(non_snake_case)]
-use pyo3::{prelude::*, types::PyDict, types::PyModule};
+use pyo3::{prelude::*, types::{PyDict, PyModule}};
 use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::{Rng, SeedableRng};
 use std::{collections::BTreeMap};
-use std::env;
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let path = match file_path {
         Some(path) => format!("{}/{}", path, file_name),
         None => {
-            Python::with_gil(|py| {
-                let module = PyModule::import(py, "py_meteor")?;
-                let target_root: String = module.getattr("__file__")?.extract()?;
-                println!("Module file: {}", target_root);
-                Ok(target_root.to_string() + "/data")
-            });
-            format!("{}/{}", target_root, file_name)
+            let target_root: String = Python::with_gil(|py| {
+                let module = py.import_bound("py_meteor")?;
+                let module_path: String = module.getattr("__file__")?.extract()?;
+                let dir = std::path::Path::new(&module_path)
+                    .parent()
+                    .expect("no parent dir")
+                    .to_path_buf();
+                Ok::<String, pyo3::PyErr>(dir.to_string_lossy().to_string())
+            }).expect("Failed to get target root");
+
+            format!("{}/{}", target_root.to_string(), file_name)
         }
     };
     println!("[INFO] Reading CSV file: {}", path);
