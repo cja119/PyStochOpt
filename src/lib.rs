@@ -9,7 +9,7 @@ use std::{collections::BTreeMap, f32::consts::E};
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let path = match file_path {
         Some(path) => format!("{}/{}", path, file_name),
-        None => file_name.to_string(),
+        None => format!("{}/{}", "../meteor_py/data", file_name),
     };
     let mut rdr = Reader::from_path(path).expect("Failed to open CSV file");
     let mut rows: Vec<(usize, f64)> = Vec::new();
