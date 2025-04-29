@@ -13,7 +13,7 @@ fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
         None => {
             Python::with_gil(|py| {
                 let module = PyModule::import(py, "py_meteor")?;
-                let module_path: String = module.getattr("__file__")?.extract()?;
+                let target_root: String = module.getattr("__file__")?.extract()?;
                 println!("Module file: {}", module_path);
                 Ok(target_root.to_string()+"/data")
             })
