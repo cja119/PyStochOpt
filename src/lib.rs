@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use pyo3::{prelude::*, types::PyDict};
+use pyo3::{prelude::*, types::PyDict, types::PyModule};
 use rayon::prelude::*;
 use pyo3::types::PyTuple;
 use csv::Reader;
