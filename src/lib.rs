@@ -16,7 +16,7 @@ fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
             format!("{}/{}", target_root, file_name)
         }
     };
-
+    println!("[INFO] Reading CSV file: {}", path);
     let mut rdr = Reader::from_path(path).expect("Failed to open CSV file");
     let mut rows: Vec<(usize, f64)> = Vec::new();
     for (i, result) in rdr.records().enumerate() {
