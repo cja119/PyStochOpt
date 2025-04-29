@@ -5,13 +5,18 @@ use pyo3::types::PyTuple;
 use csv::Reader;
 use rand::{Rng, SeedableRng};
 use std::{collections::BTreeMap};
+use std::env
 
 fn read_csv(file_name: &str, file_path: Option<&str>) -> Vec<(usize, f64)> {
     let path = match file_path {
         Some(path) => format!("{}/{}", path, file_name),
-        None => format!("{}/{}", "../meteor_py/data", file_name),
+        None => {
+            let proj_root = let project_root = env!("CARGO_MANIFEST_DIR");
+            let target_root = proj_root.to_string() + "../meteor_py/data";
+            format!("{}/{}", target_root, file_name)
+        }
     };
-    println!("Reading CSV file: {}", path);
+
     let mut rdr = Reader::from_path(path).expect("Failed to open CSV file");
     let mut rows: Vec<(usize, f64)> = Vec::new();
     for (i, result) in rdr.records().enumerate() {
