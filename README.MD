@@ -12,6 +12,4 @@ Py-Stochy is an indexing and sampling module, primarily designed to aid in build
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
   <a href="https://doi.org/10.5281/zenodo.14678340">
     <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.14678340.svg"></a>
-  <a href="https://www.rust-lang.org/">
-    <img src="https://img.shields.io/badge/rust-%20-orange.svg"></a>
 </p>
